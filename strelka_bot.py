@@ -3,11 +3,14 @@
 from telegram import Updater, User
 import logging
 import requests
+import shelve
 
-card_type_id = '3ae427a1-0f17-4524-acb1-a3f50090a8f3'
+CARD_TYPE_ID = '3ae427a1-0f17-4524-acb1-a3f50090a8f3'
+STORED_FILE = 'strelka_bot_shelve.db'
 TOKEN_FILENAME = 'token.lst'
 
 users = {}
+
 # Enable Logging
 logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -27,6 +30,21 @@ class UserInfo:
 
     def add_card(self, card_number):
         self.cards[card_number] = CardInfo(card_number)
+
+def store_users():
+    db = shelve.open(STORED_FILE)
+    db['users'] = users
+    db.close()
+
+def restore_users():
+    db = shelve.open(STORED_FILE)
+    if db.has_key('users'):
+        global users
+        users = db['users']
+        logger.info("Successful load users info from file %s" % STORED_FILE)
+    else:
+        logger.info("Can't get users info from file %s" % STORED_FILE)
+    db.close()
 
 def get_description():
     return """/help - Show help
@@ -81,6 +99,7 @@ def add_card(bot, update, args):
     user = users[telegram_user.id]
     if not user.cards.has_key(card_number):
         user.add_card(card_number)
+        store_users()
         bot.sendMessage(update.message.chat_id, text="Card %s successfully added" % (card_number))
     else:
         bot.sendMessage(update.message.chat_id, text="Card %s already added. Do nothing" % (card_number))
@@ -101,6 +120,7 @@ def remove_card(bot, update, args):
     user = users[telegram_user.id]
     if user.cards.has_key(card_number):
         user.cards.pop(card_number)
+        store_users()
         bot.sendMessage(update.message.chat_id, text="Card %s successfully removed" % (card_number))
     else:
         bot.sendMessage(update.message.chat_id, text="Card %s has not being added. Do nothing" % (card_number))
@@ -123,7 +143,7 @@ def get_card_balance(bot, update, args):
         , text="Card balance for %s: %.2f"%(card_number, balance))
 
 def get_balance(card_number):
-    payload = {'cardnum':card_number, 'cardtypeid': card_type_id}
+    payload = {'cardnum':card_number, 'cardtypeid': CARD_TYPE_ID}
     r = requests.get('http://strelkacard.ru/api/cards/status/', params=payload)
     logging.info("Get info for card %s: %d %s" % (card_number, r.status_code, r.text))
     return r.json()['balance']/100.
@@ -135,6 +155,7 @@ def read_token():
     return token
 
 def main():
+    restore_users()
     # Create the EventHandler and pass it your bot's token.
 
     token = read_token()
