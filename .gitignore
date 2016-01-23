@@ -1,2 +1,6 @@
 /token.lst
+/*.db
+/*.lock
+/*.log
+/*.pid
 /venv
