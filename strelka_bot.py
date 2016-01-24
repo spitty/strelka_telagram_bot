@@ -51,20 +51,20 @@ class UserInfo:
         self.cards[card_number] = CardInfo(card_number)
         return True
 
-def store_users():
+def store(key, obj):
     db = shelve.open(STORED_FILE)
-    db['users'] = users
+    db[key] = obj
     db.close()
 
-def restore_users():
+def restore(key):
     db = shelve.open(STORED_FILE)
-    if db.has_key('users'):
-        global users
-        users = db['users']
-        logger.info("Successful load users info from file %s" % STORED_FILE)
+    if db.has_key(key):
+        obj = db[key]
+        logger.info("Successful load data by key '%s' info from file %s" % (key, STORED_FILE))
     else:
-        logger.info("Can't get users info from file %s" % STORED_FILE)
+        logger.info("Can't get data by key '%s' info from file %s" % (key, STORED_FILE))
     db.close()
+    return obj
 
 def get_description():
     return """/help - Show help
@@ -122,7 +122,7 @@ def add_card(bot, update, args):
         if not is_card_added:
             bot.sendMessage(update.message.chat_id, text="Card %s is blocked and can't be added" % (card_number))
             return
-        store_users()
+        store('users', users)
         bot.sendMessage(update.message.chat_id, text="Card %s successfully added" % (card_number))
     else:
         bot.sendMessage(update.message.chat_id, text="Card %s already added. Do nothing" % (card_number))
@@ -143,7 +143,7 @@ def remove_card(bot, update, args):
     user = users[telegram_user.id]
     if user.cards.has_key(card_number):
         user.cards.pop(card_number)
-        store_users()
+        store('users', users)
         bot.sendMessage(update.message.chat_id, text="Card %s successfully removed" % (card_number))
     else:
         bot.sendMessage(update.message.chat_id, text="Card %s has not being added. Do nothing" % (card_number))
@@ -176,7 +176,8 @@ def read_token():
     return token
 
 def main():
-    restore_users()
+    global users
+    users = restore('users')
     # Create the EventHandler and pass it your bot's token.
 
     token = read_token()
