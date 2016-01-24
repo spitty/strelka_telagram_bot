@@ -166,6 +166,7 @@ def main():
 
     # This is how we add handlers for Telegram messages
     dp.addTelegramCommandHandler("help", help)
+    dp.addTelegramCommandHandler("start", start)
     dp.addTelegramCommandHandler("getcardbalance", get_card_balance)
     dp.addTelegramCommandHandler("addcard", add_card)
     dp.addTelegramCommandHandler("removecard", remove_card)
