@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 def get_status(card_number):
     payload = {'cardnum':card_number, 'cardtypeid': CARD_TYPE_ID}
     r = requests.get('http://strelkacard.ru/api/cards/status/', params=payload)
-    logging.info("Get info for card %s: %d %s" % (card_number, r.status_code, r.text))
+    logger.info("Get info for card %s: %d %s" % (card_number, r.status_code, r.text))
     if r.status_code == requests.codes.ok:
         return r.json()
     raise ValueError("Can't get info about card with number %s" % card_number)
