@@ -2,15 +2,16 @@
 
 from telegram import Updater, User
 import logging
-import shelve
 import checker
 from time import time, ctime
+from storer import Storer
 
 STORED_FILE = 'strelka_bot_shelve.db'
 TOKEN_FILENAME = 'token.lst'
 UPDATE_TIMEOUT = 10. * 60 * 1000 #10 min
 
 users = {}
+storer = Storer(STORED_FILE)
 
 # Enable Logging
 logging.basicConfig(
@@ -50,21 +51,6 @@ class UserInfo:
             return False
         self.cards[card_number] = CardInfo(card_number)
         return True
-
-def store(key, obj):
-    db = shelve.open(STORED_FILE)
-    db[key] = obj
-    db.close()
-
-def restore(key):
-    db = shelve.open(STORED_FILE)
-    if db.has_key(key):
-        obj = db[key]
-        logger.info("Successful load data by key '%s' info from file %s" % (key, STORED_FILE))
-    else:
-        logger.info("Can't get data by key '%s' info from file %s" % (key, STORED_FILE))
-    db.close()
-    return obj
 
 def get_description():
     return """/help - Show help
@@ -122,7 +108,7 @@ def add_card(bot, update, args):
         if not is_card_added:
             bot.sendMessage(update.message.chat_id, text="Card %s is blocked and can't be added" % (card_number))
             return
-        store('users', users)
+        storer.store('users', users)
         bot.sendMessage(update.message.chat_id, text="Card %s successfully added" % (card_number))
     else:
         bot.sendMessage(update.message.chat_id, text="Card %s already added. Do nothing" % (card_number))
@@ -143,7 +129,7 @@ def remove_card(bot, update, args):
     user = users[telegram_user.id]
     if user.cards.has_key(card_number):
         user.cards.pop(card_number)
-        store('users', users)
+        storer.store('users', users)
         bot.sendMessage(update.message.chat_id, text="Card %s successfully removed" % (card_number))
     else:
         bot.sendMessage(update.message.chat_id, text="Card %s has not being added. Do nothing" % (card_number))
@@ -177,7 +163,7 @@ def read_token():
 
 def main():
     global users
-    users = restore('users')
+    users = storer.restore('users')
     # Create the EventHandler and pass it your bot's token.
 
     token = read_token()
