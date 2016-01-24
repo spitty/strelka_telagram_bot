@@ -4,9 +4,11 @@ from telegram import Updater, User
 import logging
 import shelve
 import checker
+from time import time, ctime
 
 STORED_FILE = 'strelka_bot_shelve.db'
 TOKEN_FILENAME = 'token.lst'
+UPDATE_TIMEOUT = 10. * 60 * 1000 #10 min
 
 users = {}
 
@@ -20,6 +22,21 @@ logger = logging.getLogger(__name__)
 class CardInfo:
     def __init__(self, card_number):
         self.card_number = card_number
+        self.json = checker.get_status(self.card_number)
+        self._int_update_by_json(self.json)
+
+    def _int_update_by_json(self, json):
+        self.last_updated = time()
+        self.balance = json['balance']/100.
+        self.cardblocked = json['cardblocked']
+
+    def update(self):
+        if time() < self.last_updated + UPDATE_TIMEOUT:
+            logger.info("Can't update card %s now. Next update not earlier than at %s"
+                        % (self.card_number, ctime(self.last_updated + UPDATE_TIMEOUT)))
+            return False
+        self.json = checker.get_status(self.card_number)
+        self._int_update_by_json(self.json)
 
 class UserInfo:
     
@@ -28,7 +45,11 @@ class UserInfo:
         self.cards = {}
 
     def add_card(self, card_number):
+        card = CardInfo(card_number)
+        if card.cardblocked:
+            return False
         self.cards[card_number] = CardInfo(card_number)
+        return True
 
 def store_users():
     db = shelve.open(STORED_FILE)
@@ -97,7 +118,10 @@ def add_card(bot, update, args):
 
     user = users[telegram_user.id]
     if not user.cards.has_key(card_number):
-        user.add_card(card_number)
+        is_card_added = user.add_card(card_number)
+        if not is_card_added:
+            bot.sendMessage(update.message.chat_id, text="Card %s is blocked and can't be added" % (card_number))
+            return
         store_users()
         bot.sendMessage(update.message.chat_id, text="Card %s successfully added" % (card_number))
     else:
@@ -136,10 +160,14 @@ def get_card_balance(bot, update, args):
         return
 
     card_number = args[0]
-    balance = checker.get_balance(card_number)
-
-    bot.sendMessage(update.message.chat_id
-        , text="Card balance for %s: %.2f"%(card_number, balance))
+    try:
+        card = CardInfo(card_number)
+        bot.sendMessage(update.message.chat_id
+            , text="Card balance for %s: %.2f"%(card_number, card.balance))
+    except ValueError as err:
+        logger.error(err)
+        bot.sendMessage(update.message.chat_id
+            , text="Can't process card %s" % card_number)
 
 def read_token():
     f = open(TOKEN_FILENAME)

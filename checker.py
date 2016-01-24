@@ -12,7 +12,7 @@ def get_status(card_number):
     logging.info("Get info for card %s: %d %s" % (card_number, r.status_code, r.text))
     if r.status_code == requests.codes.ok:
         return r.json()
-    return None
+    raise ValueError("Can't get info about card with number %s" % card_number)
 
 def get_balance(card_number):
     r = get_status(card_number)
