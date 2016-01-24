@@ -6,6 +6,7 @@ import checker
 from time import time, ctime
 from storer import Storer
 from cardinfo import CardInfo
+from userinfo import UserInfo
 
 STORED_FILE = 'strelka_bot_shelve.db'
 TOKEN_FILENAME = 'token.lst'
@@ -20,19 +21,6 @@ logging.basicConfig(
         level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-
-class UserInfo:
-    
-    def __init__(self, user):
-        self.user = user
-        self.cards = {}
-
-    def add_card(self, card_number):
-        card = CardInfo(card_number)
-        if card.cardblocked:
-            return False
-        self.cards[card_number] = CardInfo(card_number)
-        return True
 
 def get_description():
     return """/help - Show help
