@@ -2,10 +2,9 @@
 
 from telegram import Updater, User
 import logging
-import requests
 import shelve
+import checker
 
-CARD_TYPE_ID = '3ae427a1-0f17-4524-acb1-a3f50090a8f3'
 STORED_FILE = 'strelka_bot_shelve.db'
 TOKEN_FILENAME = 'token.lst'
 
@@ -75,7 +74,7 @@ def get_cards(bot, update):
     cards = user.cards
     response = ""
     for card_number in cards.keys():
-        balance = get_balance(card_number)
+        balance = checker.get_balance(card_number)
         if len(response) != 0:
             response += '\n'
         response += "Card balance for %s: %.2f"%(card_number, balance)
@@ -137,16 +136,10 @@ def get_card_balance(bot, update, args):
         return
 
     card_number = args[0]
-    balance = get_balance(card_number)
+    balance = checker.get_balance(card_number)
 
     bot.sendMessage(update.message.chat_id
         , text="Card balance for %s: %.2f"%(card_number, balance))
-
-def get_balance(card_number):
-    payload = {'cardnum':card_number, 'cardtypeid': CARD_TYPE_ID}
-    r = requests.get('http://strelkacard.ru/api/cards/status/', params=payload)
-    logging.info("Get info for card %s: %d %s" % (card_number, r.status_code, r.text))
-    return r.json()['balance']/100.
 
 def read_token():
     f = open(TOKEN_FILENAME)
