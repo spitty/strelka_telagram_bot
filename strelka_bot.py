@@ -5,15 +5,17 @@ import logging
 import checker
 from time import time, ctime
 from storer import Storer
-from cardinfo import CardInfo
+from cardinfo import CardInfo, ThresholdExceedListener
 from userinfo import UserInfo
 
 STORED_FILE = 'strelka_bot_shelve.db'
 TOKEN_FILENAME = 'token.lst'
 UPDATE_TIMEOUT = 10. * 60 * 1000 #10 min
+BALANCE_CHECK_INTERVAL_SEC = 3600 # 1 hour
 
 users = {}
 storer = Storer(STORED_FILE)
+job_queue = None
 
 # Enable Logging
 logging.basicConfig(
@@ -50,11 +52,11 @@ def get_cards(bot, update):
     user = users[telegram_user.id]
     cards = user.cards
     response = ""
-    for card_number in cards.keys():
-        balance = checker.get_balance(card_number)
+    for card in cards.values():
+        card.update()
         if len(response) != 0:
             response += '\n'
-        response += "Card balance for %s: %.2f"%(card_number, balance)
+        response += "Card balance for %s: %.2f"%(card.card_number, card.balance)
 
     bot.sendMessage(update.message.chat_id
         , text=response)
@@ -104,6 +106,37 @@ def remove_card(bot, update, args):
     else:
         bot.sendMessage(update.message.chat_id, text="Card %s has not being added. Do nothing" % (card_number))
 
+def set_threshold(bot, update, args):
+    logger.info("New set_threshold message\nFrom: %s\nchat_id: %d\nText: %s" %
+                (update.message.from_user,
+                 update.message.chat_id,
+                 update.message.text))
+    if len(args) == 0:
+        bot.sendMessage(update.message.chat_id, text="Usage:\n/setthreshold threshold [card_number ...]")
+        return
+    threshold = args[0]
+    card_numbers = args[1:]
+    telegram_user = update.message.from_user
+    if not users.has_key(telegram_user.id) or len(users[telegram_user.id].cards) == 0:
+        bot.sendMessage(update.message.chat_id, text="There are no cards registered for you")
+        return
+    user = users[telegram_user.id]
+    if len(card_numbers) == 0:
+        card_numbers = user.cards.keys()
+    for card_number in card_numbers:
+        if not user.cards.has_key(card_number):
+            add_card(bot, update, card_number)
+        card = user.cards[card_number]
+        card.set_threshold(threshold)
+        listener = ThresholdExceedListener(bot=bot, chat_id=update.message.chat_id)
+
+        card.set_value_changed_listener(listener)
+
+        storer.store('users', users)
+        
+        threshold_status = "ok" if card.check_threshold_valid() else "violated"
+        bot.sendMessage(update.message.chat_id, text="Threshold %s specified for card %s. Current status: %s"
+            % (threshold, card_number, threshold_status))
 
 def get_card_balance(bot, update, args):
     logger.info("New get_card_balance message\nFrom: %s\nchat_id: %d\nText: %s" %
@@ -131,14 +164,22 @@ def read_token():
     f.close()
     return token
 
+def check_thresholds(bot):
+    for user in users.values():
+        for card in user.cards.values():
+            card.update()
+
 def main():
     global users
     users = storer.restore('users')
+
+    global job_queue
     # Create the EventHandler and pass it your bot's token.
 
     token = read_token()
     updater = Updater(token)
-
+    job_queue = updater.job_queue
+    job_queue.put(check_thresholds, BALANCE_CHECK_INTERVAL_SEC, repeat=True)
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
@@ -149,6 +190,7 @@ def main():
     dp.addTelegramCommandHandler("addcard", add_card)
     dp.addTelegramCommandHandler("removecard", remove_card)
     dp.addTelegramCommandHandler("getcards", get_cards)
+    dp.addTelegramCommandHandler("setthreshold", set_threshold)
 
 
     updater.start_polling()
