@@ -29,7 +29,8 @@ def get_description():
 /getcardbalance - Returns balance for specified card
 /addcard - Add a card to the list of registered cards
 /removecard - Remove a card to the list of registered cards
-/getcards - Returns balance for all registered cards"""
+/getcards - Returns balance for all registered cards
+/setthreshold - Set threshold value for card(s)"""
 
 def start(bot, update):
     bot.sendMessage(update.message.chat_id, text='Hi! Use next commands:\n%s'%(get_description()))
