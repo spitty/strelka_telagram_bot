@@ -37,7 +37,7 @@ class CardInfo:
         self.listener = listener
 
     def update(self):
-        if time() < self.last_updated + UPDATE_TIMEOUT:
+        if self.last_updated and time() < self.last_updated + UPDATE_TIMEOUT:
             logger.info("Can't update card %s now. Next update not earlier than at %s"
                         % (self.card_number, ctime(self.last_updated + UPDATE_TIMEOUT)))
             return False
