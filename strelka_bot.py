@@ -47,7 +47,7 @@ def get_cards(bot, update):
     telegram_user = update.message.from_user
     if not users.has_key(telegram_user.id) or len(users[telegram_user.id].cards) == 0:
         bot.sendMessage(update.message.chat_id
-        , text="There are now saved cards for you. Please use command /addcard CARD_NUMBER")
+        , text="There are no saved cards for you. Please add a card by typing /addcard CARD_NUMBER")
         return
 
     user = users[telegram_user.id]
@@ -57,7 +57,7 @@ def get_cards(bot, update):
         card.update()
         if len(response) != 0:
             response += '\n'
-        response += "Card balance for %s: %.2f"%(card.card_number, card.balance)
+        response += "Card %s balance: %.2f"%(card.card_number, card.balance)
 
     bot.sendMessage(update.message.chat_id
         , text=response)
@@ -82,9 +82,9 @@ def add_card(bot, update, args):
             bot.sendMessage(update.message.chat_id, text="Card %s is blocked and can't be added" % (card_number))
             return
         storer.store('users', users)
-        bot.sendMessage(update.message.chat_id, text="Card %s successfully added" % (card_number))
+        bot.sendMessage(update.message.chat_id, text="Card %s has been successfully added" % (card_number))
     else:
-        bot.sendMessage(update.message.chat_id, text="Card %s already added. Do nothing" % (card_number))
+        bot.sendMessage(update.message.chat_id, text="Card %s has been already added. Do nothing" % (card_number))
 
 def remove_card(bot, update, args):
     logger.info("New remove_card message\nFrom: %s\nchat_id: %d\nText: %s" %
@@ -103,9 +103,9 @@ def remove_card(bot, update, args):
     if user.cards.has_key(card_number):
         user.cards.pop(card_number)
         storer.store('users', users)
-        bot.sendMessage(update.message.chat_id, text="Card %s successfully removed" % (card_number))
+        bot.sendMessage(update.message.chat_id, text="Card %s has been successfully removed" % (card_number))
     else:
-        bot.sendMessage(update.message.chat_id, text="Card %s has not being added. Do nothing" % (card_number))
+        bot.sendMessage(update.message.chat_id, text="Card %s has not been added. Do nothing" % (card_number))
 
 def set_threshold(bot, update, args):
     logger.info("New set_threshold message\nFrom: %s\nchat_id: %d\nText: %s" %
