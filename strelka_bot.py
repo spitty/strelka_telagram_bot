@@ -3,12 +3,13 @@
 from telegram import Updater, User
 import logging
 import checker
+import os
 from time import time, ctime
 from storer import Storer
 from cardinfo import CardInfo, ThresholdExceedListener
 from userinfo import UserInfo
 
-STORED_FILE = 'strelka_bot_shelve.db'
+STORED_FILE = os.getenv('STRELKA_STORED_FILE', 'strelka_bot_shelve.db')
 TOKEN_FILENAME = 'token.lst'
 UPDATE_TIMEOUT = 10. * 60 * 1000 #10 min
 BALANCE_CHECK_INTERVAL_SEC = 3600 # 1 hour
