@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-from telegram import Updater, User
+from telegram import User
+from telegram.ext import Updater
 import logging
 import checker
 import os
