@@ -6,6 +6,12 @@ This is a Telegram bot which is able to get information about balance of card 'S
 * [`python-telegram-bot`](https://github.com/python-telegram-bot/python-telegram-bot/)
 * [`requests`](https://github.com/kennethreitz/requests)
 
+## Install requirements
+
+```bash
+pip install -r requirements.txt
+```
+
 # Setup
 
 Create file `token.lst` with your bot's token.
