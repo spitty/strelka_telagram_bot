@@ -173,6 +173,8 @@ def check_thresholds(bot):
 def main():
     global users
     users = storer.restore('users')
+    if users is None:
+        users = {}
 
     global job_queue
     # Create the EventHandler and pass it your bot's token.

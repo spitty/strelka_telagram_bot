@@ -20,6 +20,7 @@ class Storer:
             obj = db[key]
             logger.info("Successful load data by key '%s' info from file %s" % (key, self.filename))
         else:
+            obj = None
             logger.info("Can't get data by key '%s' info from file %s" % (key, self.filename))
         db.close()
         return obj
