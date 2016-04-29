@@ -4,7 +4,7 @@ import checker
 import logging
 from time import time, ctime
 
-UPDATE_TIMEOUT = 10. * 60 * 1000 #10 min
+UPDATE_TIMEOUT_SEC = 10. * 60 #10 min
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +37,9 @@ class CardInfo:
         self.listener = listener
 
     def update(self):
-        if self.last_updated and time() < self.last_updated + UPDATE_TIMEOUT:
+        if self.last_updated and time() < self.last_updated + UPDATE_TIMEOUT_SEC:
             logger.info("Can't update card %s now. Next update not earlier than at %s"
-                        % (self.card_number, ctime(self.last_updated + UPDATE_TIMEOUT)))
+                        % (self.card_number, ctime(self.last_updated + UPDATE_TIMEOUT_SEC)))
             return False
         logger.info("Updating card %s" % self.card_number)
         self.json = checker.get_status(self.card_number)
