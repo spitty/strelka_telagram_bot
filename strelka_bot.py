@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from telegram import User
-from telegram.ext import Updater
+from telegram.ext import Updater, CommandHandler
 import logging
 import checker
 import os
@@ -188,13 +188,13 @@ def main():
     dp = updater.dispatcher
 
     # This is how we add handlers for Telegram messages
-    dp.addTelegramCommandHandler("help", help)
-    dp.addTelegramCommandHandler("start", start)
-    dp.addTelegramCommandHandler("getcardbalance", get_card_balance)
-    dp.addTelegramCommandHandler("addcard", add_card)
-    dp.addTelegramCommandHandler("removecard", remove_card)
-    dp.addTelegramCommandHandler("getcards", get_cards)
-    dp.addTelegramCommandHandler("setthreshold", set_threshold)
+    dp.addHandler(CommandHandler("help", help))
+    dp.addHandler(CommandHandler("start", start))
+    dp.addHandler(CommandHandler("getcardbalance", get_card_balance, pass_args=True))
+    dp.addHandler(CommandHandler("addcard", add_card, pass_args=True))
+    dp.addHandler(CommandHandler("removecard", remove_card, pass_args=True))
+    dp.addHandler(CommandHandler("getcards", get_cards))
+    dp.addHandler(CommandHandler("setthreshold", set_threshold, pass_args=True))
 
 
     updater.start_polling()
