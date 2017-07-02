@@ -1,2 +1,2 @@
-python-telegram-bot
+python-telegram-bot==4.0.2
 requests
