@@ -5,3 +5,7 @@
 /*.log
 /*.pid
 /venv
+
+# Idea project files
+.idea
+*.iml
